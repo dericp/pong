@@ -2,7 +2,7 @@ import pygame
 import random
 
 FPS = 60
-clock = pygame.time.Clock()
+CLOCK = pygame.time.Clock()
 
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 400
@@ -15,8 +15,8 @@ BALL_WIDTH = 10
 BALL_HEIGHT = 10
 
 PADDLE_SPEED = 2
-BALL_X_SPEED = 5
-BALL_Y_SPEED = 8
+BALL_X_SPEED = 6
+BALL_Y_SPEED = 4
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -35,25 +35,27 @@ def draw_paddle_2(y_pos):
     paddle2 = pygame.Rect(WINDOW_WIDTH - PADDLE_BUFFER - PADDLE_WIDTH, y_pos, PADDLE_WIDTH, PADDLE_HEIGHT)
     pygame.draw.rect(screen, WHITE, paddle2)
 
-def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos):
+def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_y_pos, paddle_right_y_pos):
     ball_x_pos = ball_x_pos + ball_x_dir * BALL_X_SPEED
     ball_y_pos = ball_y_pos + ball_y_dir * BALL_Y_SPEED
 
     # if ball hits left paddle
-    if ball_x_pos <= PADDLE_BUFFER + PADDLE_WIDTH and ball_y_pos + BALL_HEIGHT >= paddle_1_y_pos and ball_y_pos - BALL_HEIGHT <= paddle_1_y_pos + PADDLE_HEIGHT:
+    if (ball_x_pos <= PADDLE_BUFFER + PADDLE_WIDTH and ball_y_pos + BALL_HEIGHT >= paddle_left_y_pos and ball_y_pos -
+            BALL_HEIGHT <= paddle_left_y_pos + PADDLE_HEIGHT):
         ball_x_dir = 1
     # if we got scored on
     elif ball_x_pos <= 0:
         # potentially reset game here
         ball_x_dir = 1
-        return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos]
+        return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_y_pos, paddle_right_y_pos]
 
     # if ball hits right paddle
-    if ball_x_pos >= WINDOW_WIDTH - PADDLE_WIDTH - PADDLE_BUFFER - BALL_WIDTH and ball_y_pos + BALL_HEIGHT >= paddle_2_y_pos and ball_y_pos - BALL_HEIGHT <= paddle_2_y_pos + PADDLE_HEIGHT:
+    if (ball_x_pos >= WINDOW_WIDTH - PADDLE_WIDTH - PADDLE_BUFFER - BALL_WIDTH and ball_y_pos + BALL_HEIGHT >=
+        paddle_right_y_pos and ball_y_pos - BALL_HEIGHT <= paddle_right_y_pos + PADDLE_HEIGHT):
         ball_x_dir = -1
     elif ball_x_pos >= WINDOW_WIDTH - BALL_WIDTH:
         ball_x_dir = -1
-        return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos]
+        return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_y_pos, paddle_right_y_pos]
 
     if ball_y_pos <= 0:
         ball_y_pos = 0
@@ -62,7 +64,7 @@ def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_p
         ball_y_pos = WINDOW_HEIGHT - BALL_HEIGHT
         ball_y_dir = -1
 
-    return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos]
+    return (ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_y_pos, paddle_right_y_pos)
 
 def update_ai_paddle_pos(paddle_y_pos, ball_y_pos):
     if ball_y_pos > paddle_y_pos - PADDLE_HEIGHT / 2.0:
@@ -93,8 +95,8 @@ def update_player_paddle_pos(paddle_y_pos, keys):
 
 class Pong:
     def __init__(self):
-        self.paddle_1_y_pos = WINDOW_HEIGHT / 2 - PADDLE_HEIGHT / 2
-        self.paddle_2_y_pos = WINDOW_HEIGHT / 2 - PADDLE_HEIGHT / 2
+        self.paddle_left_y_pos = WINDOW_HEIGHT / 2 - PADDLE_HEIGHT / 2
+        self.paddle_right_y_pos = WINDOW_HEIGHT / 2 - PADDLE_HEIGHT / 2
 
         self.ball_x_dir = 1
         self.ball_y_dir = 1
@@ -121,13 +123,29 @@ class Pong:
         screen.fill(BLACK)
         keys = pygame.key.get_pressed()
 
-        # update vars and draw objects
-        [self.ball_x_pos, self.ball_y_pos, self.ball_x_dir, self.ball_y_dir, self.paddle_1_y_pos, self.paddle_2_y_pos] = update_ball_pos(self.ball_x_pos, self.ball_y_pos, self.ball_x_dir, self.ball_y_dir, self.paddle_1_y_pos, self.paddle_2_y_pos)
+        # update ball
+        (self.ball_x_pos,
+         self.ball_y_pos,
+         self.ball_x_dir,
+         self.ball_y_dir,
+         self.paddle_left_y_pos,
+         self.paddle_right_y_pos) = \
+            update_ball_pos(self.ball_x_pos,
+                            self.ball_y_pos,
+                            self.ball_x_dir,
+                            self.ball_y_dir,
+                            self.paddle_left_y_pos,
+                             self.paddle_right_y_pos)
+
         draw_ball(self.ball_x_pos, self.ball_y_pos)
-        self.paddle_1_y_pos = update_ai_paddle_pos(self.paddle_1_y_pos, self.ball_y_pos)
-        draw_paddle_1(self.paddle_1_y_pos)
-        self.paddle_2_y_pos = update_player_paddle_pos(self.paddle_2_y_pos, keys)
-        draw_paddle_2(self.paddle_2_y_pos)
+
+        # update left paddle
+        self.paddle_left_y_pos = update_ai_paddle_pos(self.paddle_left_y_pos, self.ball_y_pos)
+        draw_paddle_1(self.paddle_left_y_pos)
+
+        # update right paddle
+        self.paddle_right_y_pos = update_player_paddle_pos(self.paddle_right_y_pos, keys)
+        draw_paddle_2(self.paddle_right_y_pos)
 
         pygame.display.flip()
 
@@ -135,7 +153,7 @@ class Pong:
 def main():
     game = Pong()
     while True:
-        clock.tick(FPS)
+        CLOCK.tick(FPS)
         game.get_next_frame()
 
 if __name__ == '__main__':

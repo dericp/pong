@@ -14,7 +14,7 @@ PADDLE_BUFFER = 10
 BALL_WIDTH = 10
 BALL_HEIGHT = 10
 
-PADDLE_SPEED = 2
+PADDLE_SPEED = 3
 BALL_X_SPEED = 6
 BALL_Y_SPEED = 4
 
@@ -67,7 +67,7 @@ def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_
     return (ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_left_y_pos, paddle_right_y_pos)
 
 def update_ai_paddle_pos(paddle_y_pos, ball_y_pos):
-    if ball_y_pos > paddle_y_pos - PADDLE_HEIGHT / 2.0:
+    if ball_y_pos > paddle_y_pos + PADDLE_HEIGHT / 2.0:
         paddle_y_pos = paddle_y_pos + PADDLE_SPEED
     elif ball_y_pos < paddle_y_pos:
         paddle_y_pos = paddle_y_pos - PADDLE_SPEED

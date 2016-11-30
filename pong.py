@@ -2,6 +2,7 @@ import pygame
 import random
 
 FPS = 60
+clock = pygame.time.Clock()
 
 WINDOW_WIDTH = 400
 WINDOW_HEIGHT = 400
@@ -14,8 +15,8 @@ BALL_WIDTH = 10
 BALL_HEIGHT = 10
 
 PADDLE_SPEED = 2
-BALL_X_SPEED = 3
-BALL_Y_SPEED = 2
+BALL_X_SPEED = 5
+BALL_Y_SPEED = 8
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
@@ -47,7 +48,8 @@ def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_p
         ball_x_dir = 1
         return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos]
 
-    if ball_x_pos >= WINDOW_WIDTH - PADDLE_WIDTH - PADDLE_BUFFER and ball_y_pos + BALL_HEIGHT >= paddle_2_y_pos and ball_y_pos - BALL_HEIGHT <= paddle_2_y_pos + PADDLE_HEIGHT:
+    # if ball hits right paddle
+    if ball_x_pos >= WINDOW_WIDTH - PADDLE_WIDTH - PADDLE_BUFFER - BALL_WIDTH and ball_y_pos + BALL_HEIGHT >= paddle_2_y_pos and ball_y_pos - BALL_HEIGHT <= paddle_2_y_pos + PADDLE_HEIGHT:
         ball_x_dir = -1
     elif ball_x_pos >= WINDOW_WIDTH - BALL_WIDTH:
         ball_x_dir = -1
@@ -62,10 +64,24 @@ def update_ball_pos(ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_p
 
     return [ball_x_pos, ball_y_pos, ball_x_dir, ball_y_dir, paddle_1_y_pos, paddle_2_y_pos]
 
-def update_paddle_pos(paddle_y_pos, ball_y_pos):
-    if ball_y_pos > paddle_y_pos:
+def update_ai_paddle_pos(paddle_y_pos, ball_y_pos):
+    if ball_y_pos > paddle_y_pos - PADDLE_HEIGHT / 2.0:
         paddle_y_pos = paddle_y_pos + PADDLE_SPEED
     elif ball_y_pos < paddle_y_pos:
+        paddle_y_pos = paddle_y_pos - PADDLE_SPEED
+
+    if paddle_y_pos < 0:
+        paddle_y_pos = 0
+    elif paddle_y_pos + PADDLE_HEIGHT > WINDOW_HEIGHT:
+        paddle_y_pos = WINDOW_HEIGHT - PADDLE_HEIGHT
+
+    return paddle_y_pos
+
+def update_player_paddle_pos(paddle_y_pos, keys):
+    if keys[pygame.K_DOWN]:
+        paddle_y_pos = paddle_y_pos + PADDLE_SPEED
+
+    if keys[pygame.K_UP]:
         paddle_y_pos = paddle_y_pos - PADDLE_SPEED
 
     if paddle_y_pos < 0:
@@ -103,13 +119,14 @@ class Pong:
     def get_next_frame(self):
         pygame.event.pump()
         screen.fill(BLACK)
+        keys = pygame.key.get_pressed()
 
         # update vars and draw objects
         [self.ball_x_pos, self.ball_y_pos, self.ball_x_dir, self.ball_y_dir, self.paddle_1_y_pos, self.paddle_2_y_pos] = update_ball_pos(self.ball_x_pos, self.ball_y_pos, self.ball_x_dir, self.ball_y_dir, self.paddle_1_y_pos, self.paddle_2_y_pos)
         draw_ball(self.ball_x_pos, self.ball_y_pos)
-        self.paddle_1_y_pos = update_paddle_pos(self.paddle_1_y_pos, self.ball_y_pos)
+        self.paddle_1_y_pos = update_ai_paddle_pos(self.paddle_1_y_pos, self.ball_y_pos)
         draw_paddle_1(self.paddle_1_y_pos)
-        self.paddle_2_y_pos = update_paddle_pos(self.paddle_2_y_pos, self.ball_y_pos)
+        self.paddle_2_y_pos = update_player_paddle_pos(self.paddle_2_y_pos, keys)
         draw_paddle_2(self.paddle_2_y_pos)
 
         pygame.display.flip()
@@ -118,6 +135,7 @@ class Pong:
 def main():
     game = Pong()
     while True:
+        clock.tick(FPS)
         game.get_next_frame()
 
 if __name__ == '__main__':
